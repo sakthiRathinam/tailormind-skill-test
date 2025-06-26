@@ -5,7 +5,9 @@ const { env } = require("../config");
 const authenticateToken = (req, res, next) => {
   const accessToken = req.cookies.accessToken;
   const refreshToken = req.cookies.refreshToken;
-
+  if (req.headers["internal-service"]) {
+    return basicAuth(req, res, next);
+  }
   if (!accessToken || !refreshToken) {
     throw new ApiError(401, "Unauthorized. Please provide valid tokens.");
   }
@@ -39,12 +41,12 @@ const authenticateToken = (req, res, next) => {
 
 
 const basicAuth = (req, res, next) => {
-  const authHeader = req.headers.authorization;
+  const authHeader = req.headers["x-auth-token"];
   if (!authHeader) {
     throw new ApiError(401, "Unauthorized. Please provide valid tokens.");
   }
   const [, token] = authHeader.split(" ");
-  if (token !== env.BASIC_AUTH_TOKEN) {
+  if (token !== env.AUTH_TOKEN) {
     throw new ApiError(401, "Unauthorized. Please provide valid tokens.");
   }
   next();
