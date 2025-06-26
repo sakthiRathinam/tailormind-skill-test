@@ -9,10 +9,12 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
 	"go-service/internal/config"
+	"go-service/internal/models"
 
 	"github.com/jung-kurt/gofpdf"
 	"github.com/sirupsen/logrus"
@@ -25,19 +27,29 @@ func init() {
 
 // TestPDFService_FetchStudentData tests the student data fetching functionality
 func TestPDFService_FetchStudentData(t *testing.T) {
-	// Create mock student data
-	mockStudent := &Student{
-		ID:            1,
-		FirstName:     "John",
-		LastName:      "Doe",
-		Email:         "john.doe@example.com",
-		Phone:         "+1234567890",
-		Address:       "123 Main St, City, State",
-		ClassID:       1,
-		ClassName:     "10th Grade",
-		Section:       "A",
-		AdmissionDate: "2023-01-15",
-		Status:        "Active",
+	// Create mock student data using the new schema
+	mockStudent := &models.Student{
+		ID:                 1,
+		Name:               "John Doe",
+		Email:              "john.doe@example.com",
+		Phone:              "+1234567890",
+		Gender:             "Male",
+		DOB:                "2005-01-15",
+		Class:              "10th Grade",
+		Section:            "A",
+		Roll:               123,
+		CurrentAddress:     "123 Main St, City, State",
+		PermanentAddress:   "123 Main St, City, State",
+		AdmissionDate:      "2023-01-15",
+		SystemAccess:       true,
+		FatherName:         "John Sr",
+		FatherPhone:        "+1234567891",
+		MotherName:         "Jane Doe",
+		MotherPhone:        "+1234567892",
+		GuardianName:       "John Sr",
+		GuardianPhone:      "+1234567891",
+		RelationOfGuardian: "Father",
+		ReporterName:       "Admin User",
 	}
 
 	// Create mock server
@@ -73,8 +85,20 @@ func TestPDFService_FetchStudentData(t *testing.T) {
 			t.Fatal("Expected student data, got nil")
 		}
 
-		if student.FirstName != "John" || student.LastName != "Doe" {
-			t.Errorf("Expected John Doe, got %s %s", student.FirstName, student.LastName)
+		if student.Name != "John Doe" {
+			t.Errorf("Expected John Doe, got %s", student.Name)
+		}
+
+		if student.Email != "john.doe@example.com" {
+			t.Errorf("Expected john.doe@example.com, got %s", student.Email)
+		}
+
+		if student.Roll != 123 {
+			t.Errorf("Expected roll 123, got %d", student.Roll)
+		}
+
+		if student.Class != "10th Grade" {
+			t.Errorf("Expected 10th Grade, got %s", student.Class)
 		}
 	})
 
@@ -98,19 +122,29 @@ func TestPDFService_GeneratePDFReport(t *testing.T) {
 		},
 	}
 
-	// Create test student data
-	student := &Student{
-		ID:            1,
-		FirstName:     "Jane",
-		LastName:      "Smith",
-		Email:         "jane.smith@example.com",
-		Phone:         "+1987654321",
-		Address:       "456 Oak Ave, Town, State",
-		ClassID:       2,
-		ClassName:     "11th Grade",
-		Section:       "B",
-		AdmissionDate: "2022-08-20",
-		Status:        "Active",
+	// Create test student data using the new schema
+	student := &models.Student{
+		ID:                 1,
+		Name:               "Jane Smith",
+		Email:              "jane.smith@example.com",
+		Phone:              "+1987654321",
+		Gender:             "Female",
+		DOB:                "2006-03-20",
+		Class:              "11th Grade",
+		Section:            "B",
+		Roll:               456,
+		CurrentAddress:     "456 Oak Ave, Town, State",
+		PermanentAddress:   "789 Pine St, Village, State",
+		AdmissionDate:      "2022-08-20",
+		SystemAccess:       false,
+		FatherName:         "Robert Smith",
+		FatherPhone:        "+1987654322",
+		MotherName:         "Mary Smith",
+		MotherPhone:        "+1987654323",
+		GuardianName:       "Robert Smith",
+		GuardianPhone:      "+1987654322",
+		RelationOfGuardian: "Father",
+		ReporterName:       "School Admin",
 	}
 
 	// Create PDF service
@@ -139,6 +173,34 @@ func TestPDFService_GeneratePDFReport(t *testing.T) {
 		}
 
 		t.Logf("Generated PDF file: %s (size: %d bytes)", filePath, fileInfo.Size())
+	})
+
+	// Test PDF with minimal data
+	t.Run("GeneratePDFMinimalData", func(t *testing.T) {
+		minimalStudent := &models.Student{
+			ID:             2,
+			Name:           "Minimal Student",
+			Email:          "minimal@example.com",
+			Phone:          "+1111111111",
+			Class:          "9th Grade",
+			Section:        "C",
+			Roll:           1,
+			CurrentAddress: "Address",
+			AdmissionDate:  "2023-01-01",
+			SystemAccess:   false,
+		}
+
+		filePath, err := service.GeneratePDFReport(minimalStudent)
+		if err != nil {
+			t.Fatalf("Expected no error with minimal data, got %v", err)
+		}
+
+		// Check if file exists
+		if _, err := os.Stat(filePath); os.IsNotExist(err) {
+			t.Fatalf("Expected PDF file to exist at %s", filePath)
+		}
+
+		t.Logf("Generated minimal PDF file: %s", filePath)
 	})
 }
 
@@ -189,19 +251,29 @@ func TestPDFQuality(t *testing.T) {
 		},
 	}
 
-	// Create comprehensive student data
-	student := &Student{
-		ID:            123,
-		FirstName:     "Quality",
-		LastName:      "Test",
-		Email:         "quality.test@example.com",
-		Phone:         "+1555123456",
-		Address:       "789 Quality Lane, Test City, QT 12345",
-		ClassID:       3,
-		ClassName:     "12th Grade Advanced",
-		Section:       "C",
-		AdmissionDate: "2021-09-01",
-		Status:        "Active",
+	// Create comprehensive student data using the new schema
+	student := &models.Student{
+		ID:                 123,
+		Name:               "Quality Test Student",
+		Email:              "quality.test@example.com",
+		Phone:              "+1555123456",
+		Gender:             "Non-binary",
+		DOB:                "2004-07-15",
+		Class:              "12th Grade Advanced",
+		Section:            "C",
+		Roll:               789,
+		CurrentAddress:     "789 Quality Lane, Test City, QT 12345",
+		PermanentAddress:   "456 Testing Blvd, QA Town, QT 54321",
+		AdmissionDate:      "2021-09-01",
+		SystemAccess:       true,
+		FatherName:         "Quality Father",
+		FatherPhone:        "+1555123457",
+		MotherName:         "Quality Mother",
+		MotherPhone:        "+1555123458",
+		GuardianName:       "Quality Guardian",
+		GuardianPhone:      "+1555123459",
+		RelationOfGuardian: "Uncle",
+		ReporterName:       "Quality Assurance Admin",
 	}
 
 	service := NewPDFService(cfg)
@@ -233,6 +305,107 @@ func TestPDFQuality(t *testing.T) {
 		if err != nil {
 			t.Errorf("PDF structure validation failed: %v", err)
 		}
+	})
+
+	t.Run("PDFContentValidation", func(t *testing.T) {
+		filePath, err := service.GeneratePDFReport(student)
+		if err != nil {
+			t.Fatalf("Failed to generate PDF: %v", err)
+		}
+
+		// Validate that the file was created with expected naming pattern
+		expectedPattern := fmt.Sprintf("student_%d_report_", student.ID)
+		filename := filepath.Base(filePath)
+		if !strings.Contains(filename, expectedPattern) {
+			t.Errorf("Expected filename to contain %s, got %s", expectedPattern, filename)
+		}
+
+		// Validate file extension
+		if filepath.Ext(filename) != ".pdf" {
+			t.Errorf("Expected .pdf extension, got %s", filepath.Ext(filename))
+		}
+	})
+}
+
+// TestPDFService_GenerateStudentReport tests the complete workflow
+func TestPDFService_GenerateStudentReport(t *testing.T) {
+	// Create test student data
+	mockStudent := &models.Student{
+		ID:               42,
+		Name:             "Integration Test Student",
+		Email:            "integration@test.com",
+		Phone:            "+1999888777",
+		Gender:           "Female",
+		DOB:              "2005-12-25",
+		Class:            "12th Grade",
+		Section:          "A",
+		Roll:             999,
+		CurrentAddress:   "123 Integration St",
+		PermanentAddress: "456 Test Ave",
+		AdmissionDate:    "2020-01-01",
+		SystemAccess:     true,
+		FatherName:       "Test Father",
+		FatherPhone:      "+1999888778",
+		MotherName:       "Test Mother",
+		MotherPhone:      "+1999888779",
+		ReporterName:     "Integration Admin",
+	}
+
+	// Create mock server
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/api/v1/students/42" {
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(mockStudent)
+		} else {
+			w.WriteHeader(http.StatusNotFound)
+			json.NewEncoder(w).Encode(map[string]string{"error": "Student not found"})
+		}
+	}))
+	defer server.Close()
+
+	// Create test config
+	tempDir := t.TempDir()
+	cfg := &config.Config{
+		NodeJS: config.NodeJSConfig{
+			BaseURL: server.URL,
+			Timeout: 30 * time.Second,
+		},
+		PDF: config.PDFConfig{
+			OutputDir: tempDir,
+			Title:     "Integration Test Report",
+		},
+	}
+
+	// Create PDF service
+	service := NewPDFService(cfg)
+
+	t.Run("CompleteWorkflow", func(t *testing.T) {
+		filePath, err := service.GenerateStudentReport(42)
+		if err != nil {
+			t.Fatalf("Expected no error in complete workflow, got %v", err)
+		}
+
+		// Validate the generated file
+		if _, err := os.Stat(filePath); os.IsNotExist(err) {
+			t.Fatalf("Expected PDF file to exist at %s", filePath)
+		}
+
+		// Validate PDF structure
+		err = ValidatePDFStructure(filePath)
+		if err != nil {
+			t.Errorf("PDF structure validation failed: %v", err)
+		}
+
+		t.Logf("Complete workflow successful: %s", filePath)
+	})
+
+	t.Run("StudentNotFound", func(t *testing.T) {
+		_, err := service.GenerateStudentReport(404)
+		if err == nil {
+			t.Fatal("Expected error for non-existent student, got nil")
+		}
+
+		t.Logf("Expected error received: %v", err)
 	})
 }
 
@@ -304,4 +477,3 @@ func ValidatePDFStructure(filepath string) error {
 
 	return nil
 }
-

@@ -37,4 +37,18 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
-module.exports = { authenticateToken };
+
+const basicAuth = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    throw new ApiError(401, "Unauthorized. Please provide valid tokens.");
+  }
+  const [, token] = authHeader.split(" ");
+  if (token !== env.BASIC_AUTH_TOKEN) {
+    throw new ApiError(401, "Unauthorized. Please provide valid tokens.");
+  }
+  next();
+};
+
+
+module.exports = { authenticateToken, basicAuth };
