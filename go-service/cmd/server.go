@@ -4,12 +4,13 @@ import (
 	"context"
 	"fmt"
 	"go-service/internal/config"
-	"go-service/internal/router"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
+
+	router "go-service/api"
 
 	"github.com/rs/cors"
 	"github.com/sirupsen/logrus"
