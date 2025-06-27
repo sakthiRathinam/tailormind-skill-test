@@ -45,9 +45,8 @@ const basicAuth = (req, res, next) => {
   if (!authHeader) {
     throw new ApiError(401, "Unauthorized. Please provide valid tokens.");
   }
-  const [, token] = authHeader.split(" ");
-  if (token !== env.AUTH_TOKEN) {
-    throw new ApiError(401, "Unauthorized. Please provide valid tokens.");
+  if (authHeader !== env.NODEJS_AUTH_TOKEN) {
+    throw new ApiError(401, "Unauthorized. auth token is not valid.");
   }
   next();
 };

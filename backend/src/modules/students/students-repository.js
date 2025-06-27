@@ -23,7 +23,7 @@ const findStudentById = async (id) => {
             permanent_address AS "permanentAddress",
             admission_date AS "admissionDate",
             system_access AS "systemAccess",
-            reporter_name AS "reporterName",
+            reporter_name AS "reporterName"
         FROM students
         WHERE id = $1`;
     

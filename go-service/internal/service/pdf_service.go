@@ -35,11 +35,16 @@ func NewPDFService(cfg *config.Config) *PDFService {
 func (s *PDFService) FetchStudentData(studentID int) (*models.Student, error) {
 	logrus.Infof("Fetching student data for ID: %d", studentID)
 
+	// add headers
+	s.client.SetHeader("x-auth-token", s.config.NodeJS.AuthToken)
+	s.client.SetHeader("Content-Type", "application/json")
+	s.client.SetHeader("internal-service", "true")
+	logrus.Infof("auth token: %s", s.config.NodeJS.AuthToken)
 	resp, err := s.client.R().
-		SetResult(&models.Student{}).
+		SetResult(&models.StudentResponse{}).
 		SetError(map[string]interface{}{}).
 		Get(fmt.Sprintf("/api/v1/students/%d", studentID))
-
+	logrus.Infof("response: %s", resp.Body())
 	if err != nil {
 		logrus.WithError(err).Error("Failed to fetch student data")
 		return nil, fmt.Errorf("failed to fetch student data: %w", err)
@@ -53,10 +58,10 @@ func (s *PDFService) FetchStudentData(studentID int) (*models.Student, error) {
 		return nil, fmt.Errorf("API returned status %d: %s", resp.StatusCode(), string(resp.Body()))
 	}
 
-	student := resp.Result().(*models.Student)
+	student := resp.Result().(*models.StudentResponse).Student
 	logrus.Infof("Successfully fetched data for student: %s", student.Name)
 
-	return student, nil
+	return &student, nil
 }
 
 // GeneratePDFReport generates a PDF report for a student

@@ -6,40 +6,41 @@ import (
 
 // Student represents the student data structure from the Node.js API
 type Student struct {
-	ID                    int    `json:"id"`
-	Name                  string `json:"name"`
-	Email                 string `json:"email"`
-	SystemAccess          bool   `json:"systemAccess"`
-	Phone                 string `json:"phone"`
-	Gender                string `json:"gender"`
-	DOB                   string `json:"dob"`
-	Class                 string `json:"class"`
-	Section               string `json:"section"`
-	Roll                  int    `json:"roll"`
-	FatherName            string `json:"fatherName"`
-	FatherPhone           string `json:"fatherPhone"`
-	MotherName            string `json:"motherName"`
-	MotherPhone           string `json:"motherPhone"`
-	GuardianName          string `json:"guardianName"`
-	GuardianPhone         string `json:"guardianPhone"`
-	RelationOfGuardian    string `json:"relationOfGuardian"`
-	CurrentAddress        string `json:"currentAddress"`
-	PermanentAddress      string `json:"permanentAddress"`
-	AdmissionDate         string `json:"admissionDate"`
-	ReporterName          string `json:"reporterName"`
+	ID                 int    `json:"id"`
+	Name               string `json:"name"`
+	Email              string `json:"email"`
+	SystemAccess       bool   `json:"systemAccess"`
+	Phone              string `json:"phone"`
+	Gender             string `json:"gender"`
+	DOB                string `json:"dob"`
+	Class              string `json:"class"`
+	Section            string `json:"section"`
+	Roll               int    `json:"roll"`
+	FatherName         string `json:"fatherName"`
+	FatherPhone        string `json:"fatherPhone"`
+	MotherName         string `json:"motherName"`
+	MotherPhone        string `json:"motherPhone"`
+	GuardianName       string `json:"guardianName"`
+	GuardianPhone      string `json:"guardianPhone"`
+	RelationOfGuardian string `json:"relationOfGuardian"`
+	CurrentAddress     string `json:"currentAddress"`
+	PermanentAddress   string `json:"permanentAddress"`
+	AdmissionDate      string `json:"admissionDate"`
+	ReporterName       string `json:"reporterName"`
 }
 
 // StudentResponse represents the API response wrapper
 type StudentResponse struct {
-	Student Student `json:"student,omitempty"`
+	Student Student `json:"data,omitempty"`
 	Message string  `json:"message,omitempty"`
 	Error   string  `json:"error,omitempty"`
+	Success bool    `json:"success,omitempty"`
 }
 
 // PDFReportRequest represents a request to generate a PDF report
 type PDFReportRequest struct {
-	StudentID string            `json:"student_id"`
-	Options   PDFReportOptions  `json:"options,omitempty"`
+	StudentID string           `json:"student_id"`
+	Options   PDFReportOptions `json:"options,omitempty"`
 }
 
 // PDFReportOptions represents options for PDF generation
@@ -70,4 +71,4 @@ type ErrorResponse struct {
 	Code    int    `json:"code"`
 	Message string `json:"message"`
 	Details string `json:"details,omitempty"`
-} 
+}

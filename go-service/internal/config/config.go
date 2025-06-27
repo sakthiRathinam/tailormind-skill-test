@@ -12,11 +12,11 @@ import (
 
 // Config holds all configuration for the application
 type Config struct {
-	Server   ServerConfig
-	NodeJS   NodeJSConfig
-	PDF      PDFConfig
-	Logging  LoggingConfig
-	CORS     CORSConfig
+	Server  ServerConfig
+	NodeJS  NodeJSConfig
+	PDF     PDFConfig
+	Logging LoggingConfig
+	CORS    CORSConfig
 }
 
 // ServerConfig holds server-related configuration
@@ -27,8 +27,9 @@ type ServerConfig struct {
 
 // NodeJSConfig holds Node.js API configuration
 type NodeJSConfig struct {
-	BaseURL string
-	Timeout time.Duration
+	BaseURL   string
+	Timeout   time.Duration
+	AuthToken string
 }
 
 // PDFConfig holds PDF generation configuration
@@ -74,8 +75,9 @@ func LoadConfig() (*Config, error) {
 			Host: getEnvWithDefault("HOST", "localhost"),
 		},
 		NodeJS: NodeJSConfig{
-			BaseURL: getEnvWithDefault("NODEJS_API_URL", "http://localhost:3000"),
-			Timeout: time.Duration(getEnvAsInt("NODEJS_API_TIMEOUT", 30)) * time.Second,
+			BaseURL:   getEnvWithDefault("NODEJS_API_URL", "http://localhost:3000"),
+			Timeout:   time.Duration(getEnvAsInt("NODEJS_API_TIMEOUT", 30)) * time.Second,
+			AuthToken: getEnvWithDefault("AUTH_TOKEN", ""),
 		},
 		PDF: PDFConfig{
 			OutputDir: getEnvWithDefault("PDF_OUTPUT_DIR", "./reports"),
@@ -145,4 +147,4 @@ func GetConfig() *Config {
 		panic("Configuration not loaded. Call LoadConfig() first.")
 	}
 	return AppConfig
-} 
+}
