@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  # Use existing PostgreSQL configuration
+  postgresdb:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: school_mgmt
+    ports:
+      - "5432:5432"
+    volumes:
+      - ../seed_db:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d school_mgmt"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    profiles: ["all","go-dev"]
+  # Use existing backend configuration
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    ports:
+      - "5007:5007"
+    depends_on:
+      postgresdb:
+        condition: service_healthy
+    profiles: ["all","go-dev"]
+  # Add Go PDF Service
+  go-pdf-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      NODEJS_API_URL: http://backend:5007
+      PORT: 8080
+      HOST: 0.0.0.0
+      PDF_OUTPUT_DIR: ./reports
+      LOG_LEVEL: debug
+      AUTH_TOKEN: qal2qEQnr7QElgcs4iJLs2zhHczmGXJUb9yf9QP/u/Q=
+    ports:
+      - "8080:8080"
+    depends_on:
+      - backend
+    volumes:
+      - .:/app:delegated
+      - /app/tmp
+      - ./reports:/app/reports
+    profiles: ["all","go-dev"]
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+    environment:
+      NODE_ENV: development
+    volumes:
+      - ../frontend:/app:delegated
+      - /app/node_modules
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+      - go-pdf-service
+    profiles: ["all"]
