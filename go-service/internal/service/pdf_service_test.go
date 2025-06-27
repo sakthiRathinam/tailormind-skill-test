@@ -1,9 +1,6 @@
 package service
 
 import (
-	"bytes"
-	"fmt"
-	"io"
 	"os"
 	"reflect"
 	"strings"
@@ -181,182 +178,126 @@ func TestPDFService_GeneratePDFReport(t *testing.T) {
 	})
 }
 
-// // TestPDFQuality tests the quality of generated PDFs
-// func TestPDFQuality(t *testing.T) {
-// 	tempDir := t.TempDir()
-// 	cfg := &config.Config{
-// 		PDF: config.PDFConfig{
-// 			OutputDir: tempDir,
-// 			Title:     "Quality Test Report",
-// 		},
-// 	}
-
-// 	// Create comprehensive student data using the new schema
-// 	student := &models.Student{
-// 		ID:                 123,
-// 		Name:               "Quality Test Student",
-// 		Email:              "quality.test@example.com",
-// 		Phone:              "+1555123456",
-// 		Gender:             "Non-binary",
-// 		DOB:                "2004-07-15",
-// 		Class:              "12th Grade Advanced",
-// 		Section:            "C",
-// 		Roll:               789,
-// 		CurrentAddress:     "789 Quality Lane, Test City, QT 12345",
-// 		PermanentAddress:   "456 Testing Blvd, QA Town, QT 54321",
-// 		AdmissionDate:      "2021-09-01",
-// 		SystemAccess:       true,
-// 		FatherName:         "Quality Father",
-// 		FatherPhone:        "+1555123457",
-// 		MotherName:         "Quality Mother",
-// 		MotherPhone:        "+1555123458",
-// 		GuardianName:       "Quality Guardian",
-// 		GuardianPhone:      "+1555123459",
-// 		RelationOfGuardian: "Uncle",
-// 		ReporterName:       "Quality Assurance Admin",
-// 	}
-
-// 	service := NewPDFService(cfg)
-
-// 	t.Run("PDFContentValidation", func(t *testing.T) {
-// 		filePath, err := service.GeneratePDFReport(student)
-// 		if err != nil {
-// 			t.Fatalf("Failed to generate PDF: %v", err)
-// 		}
-
-// 		// Validate that the file was created with expected naming pattern
-// 		expectedPattern := fmt.Sprintf("student_%d_report_", student.ID)
-// 		filename := filepath.Base(filePath)
-// 		if !strings.Contains(filename, expectedPattern) {
-// 			t.Errorf("Expected filename to contain %s, got %s", expectedPattern, filename)
-// 		}
-
-// 		// Validate file extension
-// 		if filepath.Ext(filename) != ".pdf" {
-// 			t.Errorf("Expected .pdf extension, got %s", filepath.Ext(filename))
-// 		}
-// 	})
-// }
-
-// // TestPDFService_GenerateStudentReport tests the complete workflow
-// func TestPDFService_GenerateStudentReport(t *testing.T) {
-// 	// Create test student data
-// 	mockStudent := &models.Student{
-// 		ID:               42,
-// 		Name:             "Integration Test Student",
-// 		Email:            "integration@test.com",
-// 		Phone:            "+1999888777",
-// 		Gender:           "Female",
-// 		DOB:              "2005-12-25",
-// 		Class:            "12th Grade",
-// 		Section:          "A",
-// 		Roll:             999,
-// 		CurrentAddress:   "123 Integration St",
-// 		PermanentAddress: "456 Test Ave",
-// 		AdmissionDate:    "2020-01-01",
-// 		SystemAccess:     true,
-// 		FatherName:       "Test Father",
-// 		FatherPhone:      "+1999888778",
-// 		MotherName:       "Test Mother",
-// 		MotherPhone:      "+1999888779",
-// 		ReporterName:     "Integration Admin",
-// 	}
-
-// 	// Create test config
-// 	tempDir := t.TempDir()
-// 	cfg := &config.Config{
-// 		NodeJS: config.NodeJSConfig{
-// 			BaseURL: server.URL,
-// 			Timeout: 30 * time.Second,
-// 		},
-// 		PDF: config.PDFConfig{
-// 			OutputDir: tempDir,
-// 			Title:     "Integration Test Report",
-// 		},
-// 	}
-
-// 	// Create PDF service
-// 	service := NewPDFService(cfg)
-
-// 	t.Run("CompleteWorkflow", func(t *testing.T) {
-// 		filePath, err := service.GenerateStudentReport(42)
-// 		if err != nil {
-// 			t.Fatalf("Expected no error in complete workflow, got %v", err)
-// 		}
-
-// 		// Validate the generated file
-// 		if _, err := os.Stat(filePath); os.IsNotExist(err) {
-// 			t.Fatalf("Expected PDF file to exist at %s", filePath)
-// 		}
-
-// 		// Validate PDF structure
-// 		err = ValidatePDFStructure(filePath)
-// 		if err != nil {
-// 			t.Errorf("PDF structure validation failed: %v", err)
-// 		}
-
-// 		t.Logf("Complete workflow successful: %s", filePath)
-// 	})
-
-// 	t.Run("StudentNotFound", func(t *testing.T) {
-// 		_, err := service.GenerateStudentReport(404)
-// 		if err == nil {
-// 			t.Fatal("Expected error for non-existent student, got nil")
-// 		}
-
-// 		t.Logf("Expected error received: %v", err)
-// 	})
-// }
-
-// ComparePDFFiles compares two PDF files for equality
-func ComparePDFFiles(file1, file2 string) (bool, error) {
-	// Read first file
-	data1, err := os.ReadFile(file1)
+func TestEntireWorkflow(t *testing.T) {
+	tempDir := t.TempDir()
+	cfg, err := config.LoadConfig()
 	if err != nil {
-		return false, fmt.Errorf("failed to read first file: %w", err)
+		t.Fatalf("Failed to load config: %v", err)
 	}
+	cfg.PDF.OutputDir = tempDir
+	service := NewPDFService(cfg)
 
-	// Read second file
-	data2, err := os.ReadFile(file2)
-	if err != nil {
-		return false, fmt.Errorf("failed to read second file: %w", err)
-	}
+	// Test the entire workflow: fetch student data and generate PDF
+	t.Run("FetchAndGeneratePDF", func(t *testing.T) {
+		studentID := 1
 
-	// Compare byte-by-byte
-	return bytes.Equal(data1, data2), nil
+		// Fetch student data
+		student, err := service.FetchStudentData(studentID)
+		if err != nil {
+			t.Fatalf("Failed to fetch student data: %v", err)
+		}
+
+		// Generate PDF report
+		filePath, err := service.GeneratePDFReport(student)
+		if err != nil {
+			t.Fatalf("Failed to generate PDF report: %v", err)
+		}
+
+		// Check if file exists
+		if _, err := os.Stat(filePath); os.IsNotExist(err) {
+			t.Fatalf("Expected PDF file to exist at %s", filePath)
+		}
+
+		// Read the generated PDF
+		generatedPDF, err := os.ReadFile(filePath)
+		if err != nil {
+			t.Fatalf("Failed to read generated PDF: %v", err)
+		}
+
+		// Read the expected PDF from testdata
+		expectedPDFPath := "../../testdata/dummy_pdf_report.pdf"
+		expectedPDF, err := os.ReadFile(expectedPDFPath)
+		if err != nil {
+			t.Fatalf("Failed to read expected PDF: %v", err)
+		}
+
+		// Compare PDFs with tolerance for dynamic content like timestamps
+		comparePDFsWithTolerance(t, generatedPDF, expectedPDF, 0.05) // Allow 5% byte differences
+
+		t.Logf("Successfully completed workflow: fetched student %d and generated matching PDF", studentID)
+	})
 }
 
-// ValidatePDFStructure validates that a PDF file has proper structure
-func ValidatePDFStructure(filepath string) error {
-	file, err := os.Open(filepath)
-	if err != nil {
-		return fmt.Errorf("failed to open PDF file: %w", err)
-	}
-	defer file.Close()
+// comparePDFsWithTolerance compares two PDFs allowing for some byte differences
+// This accounts for dynamic content like timestamps while still validating structure
+func comparePDFsWithTolerance(t *testing.T, generated, expected []byte, tolerance float64) {
+	// Log file sizes for debugging
+	t.Logf("Generated PDF size: %d bytes", len(generated))
+	t.Logf("Expected PDF size: %d bytes", len(expected))
 
-	// Read first few bytes to check PDF header
-	header := make([]byte, 4)
-	_, err = file.Read(header)
-	if err != nil {
-		return fmt.Errorf("failed to read PDF header: %w", err)
-	}
-
-	// Check PDF magic number
-	if string(header) != "%PDF" {
-		return fmt.Errorf("invalid PDF header, expected %%PDF, got %s", string(header))
+	// Check if files are roughly the same size (within 10% difference)
+	sizeDiff := float64(abs(len(generated)-len(expected))) / float64(max(len(generated), len(expected)))
+	if sizeDiff > 0.1 {
+		t.Errorf("PDF sizes differ too much: generated=%d, expected=%d (%.2f%% difference)",
+			len(generated), len(expected), sizeDiff*100)
+		return
 	}
 
-	// Read entire file to check for PDF trailer
-	file.Seek(0, 0)
-	content, err := io.ReadAll(file)
-	if err != nil {
-		return fmt.Errorf("failed to read PDF content: %w", err)
+	// Compare byte by byte and count differences
+	minLen := min(len(generated), len(expected))
+	maxLen := max(len(generated), len(expected))
+	differences := 0
+	firstDiff := -1
+
+	// Count differences in overlapping portion
+	for i := 0; i < minLen; i++ {
+		if generated[i] != expected[i] {
+			differences++
+			if firstDiff == -1 {
+				firstDiff = i
+			}
+		}
 	}
 
-	// Check for EOF marker
-	if !bytes.Contains(content, []byte("%%EOF")) {
-		return fmt.Errorf("PDF file missing EOF marker")
+	// Add length difference as additional differences
+	differences += maxLen - minLen
+
+	// Calculate difference percentage
+	diffPercent := float64(differences) / float64(maxLen)
+
+	t.Logf("Byte differences: %d out of %d bytes (%.2f%%)", differences, maxLen, diffPercent*100)
+
+	if firstDiff != -1 {
+		t.Logf("First difference at byte %d: generated=0x%02x, expected=0x%02x",
+			firstDiff, generated[firstDiff], expected[firstDiff])
 	}
 
-	return nil
+	// Check if within tolerance
+	if diffPercent > tolerance {
+		t.Errorf("PDF differences exceed tolerance: %.2f%% > %.2f%%", diffPercent*100, tolerance*100)
+	} else {
+		t.Logf("PDF comparison passed within tolerance: %.2f%% <= %.2f%%", diffPercent*100, tolerance*100)
+	}
+}
+
+// Helper functions for min/max/abs
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+func max(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
+}
+
+func abs(a int) int {
+	if a < 0 {
+		return -a
+	}
+	return a
 }
