@@ -1,7 +1,6 @@
 version: '3.8'
 
 services:
-  # Use existing PostgreSQL configuration
   postgresdb:
     image: postgres:16
     environment:
@@ -18,8 +17,8 @@ services:
       timeout: 5s
       retries: 5
       start_period: 30s
-    profiles: ["all","go-dev"]
-  # Use existing backend configuration
+    profiles: ["all","go-dev","test-services"]
+  
   backend:
     build:
       context: ../backend
@@ -29,8 +28,7 @@ services:
     depends_on:
       postgresdb:
         condition: service_healthy
-    profiles: ["all","go-dev"]
-  # Add Go PDF Service
+    profiles: ["all","go-dev","test-services"]
   go-pdf-service:
     build:
       context: .

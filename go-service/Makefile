@@ -25,14 +25,16 @@ go-dev-down: ## Stop development environment
 all-down: ## Stop all services and remove volumes
 	sudo docker-compose -f docker-compose-dev.yaml --profile all down -v
 
-rebuild: ## Rebuild and restart go-pdf-service only
-	sudo docker-compose -f docker-compose-dev.yaml up --build go-pdf-service --profile go-dev
+run-test-services: ## Run test services
+	sudo docker-compose -f docker-compose-dev.yaml --profile test-services up --build 
 
 # Testing Commands
 test: ## Run all tests
+	@echo "Before running tests, make sure to run 'make run-test-services' to start the test services or all go-dev and all-services running on other terminal or background"
 	go test ./...
 
 test-verbose: ## Run all tests with verbose output
+	@echo "Before running tests, make sure to run 'make run-test-services' to start the test services or all go-dev and all-services running on other terminal or background"
 	go test -v ./...
 
 # Local Development Commands
@@ -71,14 +73,6 @@ report-download: ## Download PDF report for student ID 1
 	curl -o student_1_report.pdf "http://localhost:8080/api/v1/students/1/report?download=true"
 	@echo "PDF downloaded as: student_1_report.pdf"
 
-# Quick Commands
-quick-start: ## Quick start development environment
-	@echo "🚀 Starting development environment..."
-	@make dev-up-d
-	@echo "Waiting for services..."
-	@sleep 30
-	@make health-check
-	@echo "✅ Ready! Use 'make logs' to view logs, 'make dev-down' to stop"
 
 quick-test: ## Quick test of PDF generation
 	@make health-check
