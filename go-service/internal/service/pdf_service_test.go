@@ -27,9 +27,8 @@ func init() {
 	}
 }
 
-// TestPDFService_FetchStudentData tests the student data fetching functionality
-func TestPDFService_FetchStudentData(t *testing.T) {
-	// Create test config
+// TestFetchStudentData tests the student data fetching functionality
+func TestFetchStudentData(t *testing.T) {
 
 	cfg, err := config.LoadConfig()
 	if err != nil {
@@ -89,98 +88,98 @@ func TestPDFService_FetchStudentData(t *testing.T) {
 	})
 }
 
-// // TestPDFService_GeneratePDFReport tests the PDF generation functionality
-// func TestPDFService_GeneratePDFReport(t *testing.T) {
-// 	// Create test config
-// 	tempDir := t.TempDir()
-// 	cfg := &config.Config{
-// 		PDF: config.PDFConfig{
-// 			OutputDir: tempDir,
-// 			Title:     "Test Student Report",
-// 		},
-// 	}
+// TestPDFService_GeneratePDFReport tests the PDF generation functionality
+func TestPDFService_GeneratePDFReport(t *testing.T) {
+	// Create test config
+	tempDir := t.TempDir()
+	cfg := &config.Config{
+		PDF: config.PDFConfig{
+			OutputDir: tempDir,
+			Title:     "Test Student Report",
+		},
+	}
 
-// 	// Create test student data using the new schema
-// 	student := &models.Student{
-// 		ID:                 1,
-// 		Name:               "Jane Smith",
-// 		Email:              "jane.smith@example.com",
-// 		Phone:              "+1987654321",
-// 		Gender:             "Female",
-// 		DOB:                "2006-03-20",
-// 		Class:              "11th Grade",
-// 		Section:            "B",
-// 		Roll:               456,
-// 		CurrentAddress:     "456 Oak Ave, Town, State",
-// 		PermanentAddress:   "789 Pine St, Village, State",
-// 		AdmissionDate:      "2022-08-20",
-// 		SystemAccess:       false,
-// 		FatherName:         "Robert Smith",
-// 		FatherPhone:        "+1987654322",
-// 		MotherName:         "Mary Smith",
-// 		MotherPhone:        "+1987654323",
-// 		GuardianName:       "Robert Smith",
-// 		GuardianPhone:      "+1987654322",
-// 		RelationOfGuardian: "Father",
-// 		ReporterName:       "School Admin",
-// 	}
+	// Create test student data using the new schema
+	student := &models.Student{
+		ID:                 1,
+		Name:               "Jane Smith",
+		Email:              "jane.smith@example.com",
+		Phone:              "+1987654321",
+		Gender:             "Female",
+		DOB:                "2006-03-20",
+		Class:              "11th Grade",
+		Section:            "B",
+		Roll:               456,
+		CurrentAddress:     "456 Oak Ave, Town, State",
+		PermanentAddress:   "789 Pine St, Village, State",
+		AdmissionDate:      "2022-08-20",
+		SystemAccess:       false,
+		FatherName:         "Robert Smith",
+		FatherPhone:        "+1987654322",
+		MotherName:         "Mary Smith",
+		MotherPhone:        "+1987654323",
+		GuardianName:       "Robert Smith",
+		GuardianPhone:      "+1987654322",
+		RelationOfGuardian: "Father",
+		ReporterName:       "School Admin",
+	}
 
-// 	// Create PDF service
-// 	service := NewPDFService(cfg)
+	// Create PDF service
+	service := NewPDFService(cfg)
 
-// 	// Test PDF generation
-// 	t.Run("GeneratePDF", func(t *testing.T) {
-// 		filePath, err := service.GeneratePDFReport(student)
-// 		if err != nil {
-// 			t.Fatalf("Expected no error, got %v", err)
-// 		}
+	// Test PDF generation
+	t.Run("GeneratePDF", func(t *testing.T) {
+		filePath, err := service.GeneratePDFReport(student)
+		if err != nil {
+			t.Fatalf("Expected no error, got %v", err)
+		}
 
-// 		// Check if file exists
-// 		if _, err := os.Stat(filePath); os.IsNotExist(err) {
-// 			t.Fatalf("Expected PDF file to exist at %s", filePath)
-// 		}
+		// Check if file exists
+		if _, err := os.Stat(filePath); os.IsNotExist(err) {
+			t.Fatalf("Expected PDF file to exist at %s", filePath)
+		}
 
-// 		// Check file size (should be > 0)
-// 		fileInfo, err := os.Stat(filePath)
-// 		if err != nil {
-// 			t.Fatalf("Failed to get file info: %v", err)
-// 		}
+		// Check file size (should be > 0)
+		fileInfo, err := os.Stat(filePath)
+		if err != nil {
+			t.Fatalf("Failed to get file info: %v", err)
+		}
 
-// 		if fileInfo.Size() == 0 {
-// 			t.Fatal("Expected PDF file to have content, but it's empty")
-// 		}
+		if fileInfo.Size() == 0 {
+			t.Fatal("Expected PDF file to have content, but it's empty")
+		}
 
-// 		t.Logf("Generated PDF file: %s (size: %d bytes)", filePath, fileInfo.Size())
-// 	})
+		t.Logf("Generated PDF file: %s (size: %d bytes)", filePath, fileInfo.Size())
+	})
 
-// 	// Test PDF with minimal data
-// 	t.Run("GeneratePDFMinimalData", func(t *testing.T) {
-// 		minimalStudent := &models.Student{
-// 			ID:             2,
-// 			Name:           "Minimal Student",
-// 			Email:          "minimal@example.com",
-// 			Phone:          "+1111111111",
-// 			Class:          "9th Grade",
-// 			Section:        "C",
-// 			Roll:           1,
-// 			CurrentAddress: "Address",
-// 			AdmissionDate:  "2023-01-01",
-// 			SystemAccess:   false,
-// 		}
+	// Test PDF with minimal data
+	t.Run("GeneratePDFMinimalData", func(t *testing.T) {
+		minimalStudent := &models.Student{
+			ID:             2,
+			Name:           "Minimal Student",
+			Email:          "minimal@example.com",
+			Phone:          "+1111111111",
+			Class:          "9th Grade",
+			Section:        "C",
+			Roll:           1,
+			CurrentAddress: "Address",
+			AdmissionDate:  "2023-01-01",
+			SystemAccess:   false,
+		}
 
-// 		filePath, err := service.GeneratePDFReport(minimalStudent)
-// 		if err != nil {
-// 			t.Fatalf("Expected no error with minimal data, got %v", err)
-// 		}
+		filePath, err := service.GeneratePDFReport(minimalStudent)
+		if err != nil {
+			t.Fatalf("Expected no error with minimal data, got %v", err)
+		}
 
-// 		// Check if file exists
-// 		if _, err := os.Stat(filePath); os.IsNotExist(err) {
-// 			t.Fatalf("Expected PDF file to exist at %s", filePath)
-// 		}
+		// Check if file exists
+		if _, err := os.Stat(filePath); os.IsNotExist(err) {
+			t.Fatalf("Expected PDF file to exist at %s", filePath)
+		}
 
-// 		t.Logf("Generated minimal PDF file: %s", filePath)
-// 	})
-// }
+		t.Logf("Generated minimal PDF file: %s", filePath)
+	})
+}
 
 // // TestPDFQuality tests the quality of generated PDFs
 // func TestPDFQuality(t *testing.T) {

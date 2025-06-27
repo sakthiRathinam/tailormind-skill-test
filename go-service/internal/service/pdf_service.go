@@ -64,6 +64,37 @@ func (s *PDFService) FetchStudentData(studentID int) (*models.Student, error) {
 	return &student, nil
 }
 
+// createTableRow creates a properly sized table row with borders in the PDF
+func createTableRow(pdf *gofpdf.Fpdf, label, value string, isHeader bool) {
+	// Larger row height to fill page better
+	rowHeight := 7.0
+	labelWidth := 75.0
+	valueWidth := 115.0
+
+	if isHeader {
+		pdf.SetFillColor(52, 73, 94)    // Same color as header/footer
+		pdf.SetTextColor(255, 255, 255) // White text
+		pdf.SetFont("Arial", "B", 11)
+	} else {
+		pdf.SetFillColor(248, 248, 248) // Very light gray background for data rows
+		pdf.SetTextColor(0, 0, 0)       // Black text
+		pdf.SetFont("Arial", "", 10)
+	}
+
+	// Draw label cell with border
+	pdf.CellFormat(labelWidth, rowHeight, label, "1", 0, "L", true, 0, "")
+
+	// Set font for value (always regular for readability)
+	if isHeader {
+		pdf.SetFont("Arial", "B", 11)
+	} else {
+		pdf.SetFont("Arial", "", 10)
+	}
+
+	// Draw value cell with border
+	pdf.CellFormat(valueWidth, rowHeight, value, "1", 1, "L", true, 0, "")
+}
+
 // GeneratePDFReport generates a PDF report for a student
 func (s *PDFService) GeneratePDFReport(student *models.Student) (string, error) {
 	logrus.Infof("Generating PDF report for student: %s", student.Name)
@@ -72,145 +103,87 @@ func (s *PDFService) GeneratePDFReport(student *models.Student) (string, error) 
 	pdf := gofpdf.New("P", "mm", "A4", "")
 	pdf.AddPage()
 
-	// Set title
-	pdf.SetFont("Arial", "B", 20)
-	pdf.Cell(0, 15, s.config.PDF.Title)
-	pdf.Ln(20)
+	// Header Section
+	pdf.SetFillColor(52, 73, 94) // Same color as footer
+	pdf.Rect(0, 0, 210, 25, "F") // Full width header background
 
-	// Student Information Header
-	pdf.SetFont("Arial", "B", 16)
-	pdf.Cell(0, 10, "Student Information")
-	pdf.Ln(15)
+	pdf.SetTextColor(255, 255, 255) // White text
+	pdf.SetFont("Arial", "B", 18)
+	pdf.SetXY(10, 8)
+	pdf.Cell(0, 10, "TAILORMIND SCHOOL MANAGEMENT SYSTEM")
 
-	// Student Details
 	pdf.SetFont("Arial", "", 12)
+	pdf.SetXY(10, 18)
+	pdf.Cell(0, 5, "Student Detail Report")
 
-	// Name
-	pdf.SetFont("Arial", "B", 12)
-	pdf.Cell(40, 8, "Name:")
-	pdf.SetFont("Arial", "", 12)
-	pdf.Cell(0, 8, student.Name)
-	pdf.Ln(10)
+	// Main content area
+	pdf.SetY(32)
+	pdf.SetTextColor(0, 0, 0)
 
-	// Email
-	pdf.SetFont("Arial", "B", 12)
-	pdf.Cell(40, 8, "Email:")
-	pdf.SetFont("Arial", "", 12)
-	pdf.Cell(0, 8, student.Email)
-	pdf.Ln(10)
+	// Single comprehensive table
+	pdf.SetFont("Arial", "B", 14)
+	pdf.Cell(0, 8, "COMPLETE STUDENT INFORMATION")
+	pdf.Ln(12)
 
-	// Phone
-	pdf.SetFont("Arial", "B", 12)
-	pdf.Cell(40, 8, "Phone:")
-	pdf.SetFont("Arial", "", 12)
-	pdf.Cell(0, 8, student.Phone)
-	pdf.Ln(10)
+	// Create single table with all student details
+	createTableRow(pdf, "FIELD", "INFORMATION", true)
 
-	// Current Address
-	pdf.SetFont("Arial", "B", 12)
-	pdf.Cell(40, 8, "Address:")
-	pdf.SetFont("Arial", "", 12)
-	pdf.Cell(0, 8, student.CurrentAddress)
-	pdf.Ln(10)
+	// Personal Information
+	createTableRow(pdf, "Student ID", fmt.Sprintf("%d", student.ID), false)
+	createTableRow(pdf, "Full Name", student.Name, false)
+	createTableRow(pdf, "Email Address", student.Email, false)
+	createTableRow(pdf, "Phone Number", student.Phone, false)
+	createTableRow(pdf, "Gender", student.Gender, false)
+	createTableRow(pdf, "Date of Birth", student.DOB, false)
+	createTableRow(pdf, "Admission Date", student.AdmissionDate, false)
 
-	// Class Information
-	pdf.SetFont("Arial", "B", 12)
-	pdf.Cell(40, 8, "Class:")
-	pdf.SetFont("Arial", "", 12)
-	pdf.Cell(0, 8, fmt.Sprintf("%s - Section %s", student.Class, student.Section))
-	pdf.Ln(10)
+	// Academic Information
+	createTableRow(pdf, "Class", student.Class, false)
+	createTableRow(pdf, "Section", student.Section, false)
+	createTableRow(pdf, "Roll Number", fmt.Sprintf("%d", student.Roll), false)
+	createTableRow(pdf, "System Access", func() string {
+		if student.SystemAccess {
+			return "Enabled"
+		}
+		return "Disabled"
+	}(), false)
 
-	// Roll Number
-	pdf.SetFont("Arial", "B", 12)
-	pdf.Cell(40, 8, "Roll Number:")
-	pdf.SetFont("Arial", "", 12)
-	pdf.Cell(0, 8, fmt.Sprintf("%d", student.Roll))
-	pdf.Ln(10)
+	// Address Information
+	createTableRow(pdf, "Current Address", student.CurrentAddress, false)
+	if student.PermanentAddress != "" && student.PermanentAddress != student.CurrentAddress {
+		createTableRow(pdf, "Permanent Address", student.PermanentAddress, false)
+	}
 
-	// Date of Birth
-	pdf.SetFont("Arial", "B", 12)
-	pdf.Cell(40, 8, "Date of Birth:")
-	pdf.SetFont("Arial", "", 12)
-	pdf.Cell(0, 8, student.DOB)
-	pdf.Ln(10)
-
-	// Gender
-	pdf.SetFont("Arial", "B", 12)
-	pdf.Cell(40, 8, "Gender:")
-	pdf.SetFont("Arial", "", 12)
-	pdf.Cell(0, 8, student.Gender)
-	pdf.Ln(10)
-
-	// Admission Date
-	pdf.SetFont("Arial", "B", 12)
-	pdf.Cell(40, 8, "Admission Date:")
-	pdf.SetFont("Arial", "", 12)
-	pdf.Cell(0, 8, student.AdmissionDate)
-	pdf.Ln(20)
-
-	// Parent Information Section
-	pdf.SetFont("Arial", "B", 16)
-	pdf.Cell(0, 10, "Parent Information")
-	pdf.Ln(15)
-
-	// Father Information
-	pdf.SetFont("Arial", "B", 12)
-	pdf.Cell(40, 8, "Father:")
-	pdf.SetFont("Arial", "", 12)
-	pdf.Cell(0, 8, fmt.Sprintf("%s - %s", student.FatherName, student.FatherPhone))
-	pdf.Ln(10)
-
-	// Mother Information
-	pdf.SetFont("Arial", "B", 12)
-	pdf.Cell(40, 8, "Mother:")
-	pdf.SetFont("Arial", "", 12)
-	pdf.Cell(0, 8, fmt.Sprintf("%s - %s", student.MotherName, student.MotherPhone))
-	pdf.Ln(10)
+	// Family Information
+	createTableRow(pdf, "Father's Name", student.FatherName, false)
+	createTableRow(pdf, "Father's Phone", student.FatherPhone, false)
+	createTableRow(pdf, "Mother's Name", student.MotherName, false)
+	createTableRow(pdf, "Mother's Phone", student.MotherPhone, false)
 
 	// Guardian Information (if different from parents)
 	if student.GuardianName != "" && student.GuardianName != student.FatherName && student.GuardianName != student.MotherName {
-		pdf.SetFont("Arial", "B", 12)
-		pdf.Cell(40, 8, "Guardian:")
-		pdf.SetFont("Arial", "", 12)
-		pdf.Cell(0, 8, fmt.Sprintf("%s (%s) - %s", student.GuardianName, student.RelationOfGuardian, student.GuardianPhone))
-		pdf.Ln(10)
-	}
-
-	// Permanent Address (if different from current)
-	if student.PermanentAddress != "" && student.PermanentAddress != student.CurrentAddress {
-		pdf.Ln(5)
-		pdf.SetFont("Arial", "B", 12)
-		pdf.Cell(40, 8, "Permanent Address:")
-		pdf.SetFont("Arial", "", 12)
-		pdf.Cell(0, 8, student.PermanentAddress)
-		pdf.Ln(10)
+		createTableRow(pdf, "Guardian Name", student.GuardianName, false)
+		createTableRow(pdf, "Guardian Relation", student.RelationOfGuardian, false)
+		createTableRow(pdf, "Guardian Phone", student.GuardianPhone, false)
 	}
 
 	// Reporter Information (if available)
 	if student.ReporterName != "" {
-		pdf.Ln(5)
-		pdf.SetFont("Arial", "B", 12)
-		pdf.Cell(40, 8, "Reporter:")
-		pdf.SetFont("Arial", "", 12)
-		pdf.Cell(0, 8, student.ReporterName)
-		pdf.Ln(10)
+		createTableRow(pdf, "Reporter Name", student.ReporterName, false)
 	}
 
-	// System Access
-	pdf.Ln(5)
-	pdf.SetFont("Arial", "B", 12)
-	pdf.Cell(40, 8, "System Access:")
-	pdf.SetFont("Arial", "", 12)
-	systemAccess := "No"
-	if student.SystemAccess {
-		systemAccess = "Yes"
-	}
-	pdf.Cell(0, 8, systemAccess)
-	pdf.Ln(20)
+	// Footer Section - compact footer after table
+	pdf.Ln(5) // Small gap after table
 
-	// Footer
-	pdf.SetFont("Arial", "I", 10)
-	pdf.Cell(0, 8, fmt.Sprintf("Generated on: %s", time.Now().Format("2006-01-02 15:04:05")))
+	// Ensure footer fits on same page (A4 is 297mm tall)
+	footerStart := 280.0
+	pdf.SetFillColor(52, 73, 94)           // Dark blue-gray for footer
+	pdf.Rect(0, footerStart, 210, 20, "F") // Compact footer background
+
+	// Footer right side - page info
+	pdf.SetXY(170, footerStart+5)
+	pdf.SetTextColor(255, 255, 255) // Set text color to white
+	pdf.Text(170, footerStart+5, "Page 1 of 1")
 
 	// Ensure output directory exists
 	if err := os.MkdirAll(s.config.PDF.OutputDir, 0755); err != nil {
